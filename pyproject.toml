@@ -1,0 +1,65 @@
+[project]
+name = "danim-test"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.0",
+    "djangorestframework>=3.15",
+    "djangorestframework-simplejwt>=5.3",
+    "django-allauth>=65.0",
+    "dj-rest-auth>=7.0",
+    "django-storages[s3]>=1.14",
+    "boto3>=1.34",
+    "django-cors-headers>=4.3",
+    "django-redis>=5.4",
+    "Pillow>=10.3",
+    "django-environ>=0.11",
+    "drf-spectacular>=0.27",
+    "psycopg2-binary>=2.9",
+    "gunicorn>=22.0",
+    "pgvector>=0.4.2",
+    "sentence-transformers>=5.5.1",
+    "python-ulid>=3.1.0",
+    "groq>=1.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=24.0",
+    "isort>=5.13",
+    "mypy==1.13.0",
+    "django-stubs>=5.0",
+    "djangorestframework-stubs>=3.15",
+    "coverage>=7.5",
+    "pytest>=8.0",
+    "pytest-django>=4.8",
+    "pre-commit>=3.7",
+    "django-extensions>=4.1",
+    "ipython>=9.13.0",
+]
+test = [
+    "kagglehub>=1.0.1",
+    "pandas>=3.0.3",
+]
+
+[tool.black]
+line-length = 90
+target-version = ["py313"]
+skip-magic-trailing-comma = false
+
+[tool.isort]
+profile = "black"
+line_length = 90
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.local"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.local"
+python_files = ["test_*.py"]

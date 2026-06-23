@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>탐색 피드 · 테스트</title>
+<style>
+  :root {
+    --color-mint-50:#ECF7F1; --color-mint-500:#3ECBA0; --color-mint-600:#2EC27E; --color-mint-700:#1F9F63;
+    --color-gray-50:#F9FAFB; --color-gray-100:#F3F4F6; --color-gray-200:#E5E7EB; --color-gray-300:#D1D5DB;
+    --color-gray-400:#9CA3AF; --color-gray-500:#6B7280; --color-gray-600:#4B5563; --color-gray-700:#374151;
+    --color-gray-800:#1F2937; --color-gray-900:#0F1720;
+    --color-primary:var(--color-mint-500); --color-primary-hover:var(--color-mint-600);
+    --color-bg:var(--color-gray-100); --color-bg-card:#fff; --color-bg-subtle:var(--color-gray-50);
+    --color-text:var(--color-gray-900); --color-text-body:var(--color-gray-600); --color-text-muted:var(--color-gray-500);
+    --color-border:var(--color-gray-200); --color-border-subtle:var(--color-gray-100);
+    --radius-card:20px; --radius-control:12px; --radius-pill:9999px; --radius-modal:24px;
+    --shadow-card:0 4px 16px rgba(17,24,39,0.06); --shadow-card-hover:0 12px 32px rgba(15,23,32,0.08);
+    --shadow-modal:0 12px 32px rgba(15,23,32,0.08);
+    --font-base:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Pretendard",system-ui,sans-serif;
+    --overlay:rgb(15 23 32 / 0.45);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--color-bg); color:var(--color-text); font-family:var(--font-base); line-height:1.6; }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--color-border); border-radius:3px; }
+
+  .topbar {
+    position:sticky; top:0; z-index:10; background:rgba(255,255,255,0.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--color-border-subtle); padding:14px 20px;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .topbar h1 { font-size:16px; font-weight:700; letter-spacing:-0.01em; color:var(--color-gray-900); margin-right:4px; }
+  .topbar .badge { font-size:11px; font-weight:600; color:var(--color-primary); background:var(--color-mint-50);
+    padding:3px 9px; border-radius:var(--radius-pill); }
+  .ctrl { display:flex; align-items:center; gap:6px; }
+  .ctrl label { font-size:12px; color:var(--color-text-muted); font-weight:500; }
+  .ctrl input {
+    font-size:13px; padding:7px 10px; border:1px solid var(--color-border);
+    border-radius:var(--radius-control); font-family:inherit; outline:none; color:var(--color-gray-800);
+  }
+  #email { width:200px; }
+  #seed { width:90px; }
+  /* 검색창 */
+  .searchbox { display:flex; align-items:center; gap:6px; }
+  #search { width:220px; }
+  #search:focus { border-color:var(--color-primary); box-shadow:0 0 0 3px rgba(62,203,160,0.18); }
+  #userSel {
+    font-size:13px; padding:7px 10px; border:1px solid var(--color-border);
+    border-radius:var(--radius-control); font-family:inherit; outline:none;
+    color:var(--color-gray-800); background:#fff; min-width:200px; cursor:pointer;
+  }
+  #userSel:focus { border-color:var(--color-primary); box-shadow:0 0 0 3px rgba(62,203,160,0.18); }
+  .ctrl input:focus { border-color:var(--color-primary); box-shadow:0 0 0 3px rgba(62,203,160,0.18); }
+  .btn {
+    font-family:inherit; font-size:13px; font-weight:600; padding:8px 16px; border-radius:var(--radius-control);
+    border:none; cursor:pointer; transition:background .14s, transform .14s; white-space:nowrap;
+  }
+  .btn-primary { background:var(--color-primary); color:#fff; box-shadow:0 4px 14px rgba(62,203,160,0.35); }
+  .btn-primary:hover { background:var(--color-primary-hover); }
+  .btn-primary:active { transform:translateY(1px); }
+  .btn-ghost { background:#fff; color:var(--color-text-body); border:1px solid var(--color-border); }
+  .btn-ghost:hover { background:var(--color-bg-subtle); }
+
+  /* 검색 모드 표시 배너 */
+  .searchbar {
+    max-width:760px; margin:16px auto 0; padding:0 16px;
+    display:none; align-items:center; gap:10px;
+  }
+  .searchbar.show { display:flex; }
+  .searchbar .chip {
+    font-size:13px; font-weight:600; color:var(--color-mint-700); background:var(--color-mint-50);
+    padding:6px 12px; border-radius:var(--radius-pill);
+  }
+  .searchbar .clear {
+    font-size:12px; color:var(--color-text-muted); background:none; border:none; cursor:pointer;
+    text-decoration:underline;
+  }
+  .searchbar .clear:hover { color:var(--color-text-body); }
+
+  .feed { max-width:760px; margin:0 auto; padding:24px 16px 80px; display:flex; flex-direction:column; gap:14px; }
+  .card {
+    background:var(--color-bg-card); border-radius:var(--radius-card); box-shadow:var(--shadow-card);
+    padding:20px; transition:box-shadow .16s, transform .16s; position:relative;
+  }
+  .card:hover { box-shadow:var(--shadow-card-hover); transform:translateY(-2px); }
+
+  .card .meta {
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    font-size:12px; color:var(--color-text-muted); margin-bottom:10px;
+  }
+  .card .meta .sep { color:var(--color-gray-300); }
+  .card .meta .stat b { color:var(--color-gray-700); font-weight:600; font-variant-numeric:tabular-nums; }
+
+  .card .title {
+    font-size:18px; font-weight:700; letter-spacing:-0.01em; color:var(--color-gray-900);
+    cursor:pointer; line-height:1.35; margin-bottom:8px;
+  }
+  .card .title:hover { color:var(--color-primary-hover); }
+  .card .content {
+    font-size:15px; color:var(--color-text-body); line-height:1.65; white-space:pre-wrap;
+    display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  /* 썸네일: 높이만 고정, 가로는 원본 비율대로(자르지 않음) */
+  .card .thumb {
+    height:140px; width:auto; max-width:100%; object-fit:contain; object-position:left;
+    border-radius:var(--radius-control); margin-bottom:12px;
+    background:var(--color-gray-50); display:block;
+  }
+
+  .actions { display:flex; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--color-border-subtle); }
+  .act {
+    font-family:inherit; font-size:13px; font-weight:600; padding:7px 14px; border-radius:var(--radius-control);
+    border:1px solid var(--color-border); background:#fff; color:var(--color-text-body);
+    cursor:pointer; transition:all .12s; display:inline-flex; align-items:center; gap:5px;
+  }
+  .act:hover { background:var(--color-bg-subtle); border-color:var(--color-gray-300); }
+  .act:active { transform:translateY(1px); }
+  .act.done { background:var(--color-mint-50); border-color:var(--color-mint-500); color:var(--color-mint-700); }
+  .act .n { font-variant-numeric:tabular-nums; opacity:.7; }
+
+  @keyframes flash { 0%{background:var(--color-mint-50);} 100%{background:var(--color-bg-card);} }
+  .card.flash { animation:flash .7s ease; }
+
+  .empty { text-align:center; color:var(--color-text-muted); padding:60px 20px; font-size:14px; }
+  .loadmore { text-align:center; color:var(--color-text-muted); padding:20px; font-size:13px; }
+
+  .toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--color-gray-900); color:#fff; font-size:13px; font-weight:500;
+    padding:10px 18px; border-radius:var(--radius-pill); box-shadow:var(--shadow-modal);
+    opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; z-index:50;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .overlay {
+    position:fixed; inset:0; background:var(--overlay); display:none; align-items:center; justify-content:center;
+    z-index:100; padding:20px;
+  }
+  .overlay.show { display:flex; }
+  .modal {
+    background:#fff; border-radius:var(--radius-modal); box-shadow:var(--shadow-modal);
+    width:100%; max-width:520px; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;
+  }
+  .modal .mhead { padding:24px 24px 16px; border-bottom:1px solid var(--color-border-subtle); display:flex; align-items:flex-start; gap:12px; }
+  .modal .mhead .mtitle { font-size:20px; font-weight:700; letter-spacing:-0.01em; color:var(--color-gray-900); flex:1; line-height:1.35; }
+  .modal .mhead .x { background:none; border:none; font-size:22px; color:var(--color-gray-400); cursor:pointer; line-height:1; padding:0; }
+  .modal .mbody { padding:16px 24px 24px; overflow-y:auto; }
+  .modal .clabel { font-size:12px; font-weight:600; color:var(--color-text-muted); margin-bottom:12px; }
+  .modal .clabel .cnt { color:var(--color-primary); }
+  .cmt { padding:12px 0; border-bottom:1px solid var(--color-border-subtle); display:flex; gap:10px; }
+  .cmt:last-child { border-bottom:none; }
+  .cmt .nick { font-size:13px; font-weight:600; color:var(--color-gray-700); flex-shrink:0; }
+  .cmt .txt { font-size:13px; color:var(--color-text-body); }
+  .cmt-empty { font-size:13px; color:var(--color-text-muted); padding:20px 0; text-align:center; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>탐색 피드</h1>
+  <span class="badge">테스트</span>
+  <div class="ctrl">
+    <label for="userSel">viewer</label>
+    <select id="userSel" onchange="onUserChange()">
+      <option value="">익명</option>
+    </select>
+  </div>
+  <div class="ctrl searchbox">
+    <label for="search">검색</label>
+    <input id="search" type="text" placeholder="검색어 입력 후 Enter" onkeydown="if(event.key==='Enter')doSearch()" />
+    <button class="btn btn-primary" onclick="doSearch()">검색</button>
+  </div>
+  <div class="ctrl">
+    <label for="seed">seed</label>
+    <input id="seed" type="number" placeholder="(자동)" />
+  </div>
+  <button class="btn btn-ghost" onclick="reshuffle()">새 seed</button>
+  <span id="seedInfo" style="font-size:12px;color:var(--color-text-muted);margin-left:auto;"></span>
+</div>
+
+<!-- 검색 모드 배너: 검색 중일 때만 표시 -->
+<div class="searchbar" id="searchbar">
+  <span class="chip" id="searchChip"></span>
+  <button class="clear" onclick="clearSearch()">검색 해제 · 탐색으로 돌아가기</button>
+</div>
+
+<div class="feed" id="feed"></div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mhead">
+      <div class="mtitle" id="mTitle">—</div>
+      <button class="x" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="mbody">
+      <div class="clabel">댓글 <span class="cnt" id="mCount">0</span></div>
+      <div id="mComments"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = "";
+
+const $ = (id) => document.getElementById(id);
+
+// ── 무한스크롤 상태 ──
+let currentSeed = null;
+let currentPage = 0;
+let hasNext = true;
+let loading = false;
+
+// ── 검색 상태 ──
+// searchQuery 가 비어있으면 탐색(explore) 모드, 값이 있으면 검색 모드.
+let searchQuery = "";
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove("show"), 1600);
+}
+function email() { return $("userSel").value.trim(); }
+
+const LS_KEY = "demo_viewer_email";
+
+// ── 드롭다운 채우기 (demo_ 유저만) + 마지막 선택 복원 ──
+async function loadUsers() {
+  try {
+    const res = await fetch(`${API_BASE}/users/`);
+    const data = await res.json();
+    const sel = $("userSel");
+    const saved = localStorage.getItem(LS_KEY) || "";
+    sel.innerHTML = '<option value="">익명</option>' +
+      data.users.map(u =>
+        `<option value="${esc(u.email)}">${esc(u.nickname || u.email)} (${esc(u.email)})</option>`
+      ).join("");
+    // 새로고침해도 직전 선택 유지
+    if (saved && [...sel.options].some(o => o.value === saved)) {
+      sel.value = saved;
+    }
+  } catch (e) {
+    toast("유저 목록 로드 실패: " + e.message);
+  }
+}
+
+// 드롭다운에서 유저 바꾸면 저장 + 피드 처음부터 다시
+function onUserChange() {
+  localStorage.setItem(LS_KEY, email());
+  reload();
+}
+function withEmail(url) {
+  const e = email();
+  if (!e) return url;
+  return url + (url.includes("?") ? "&" : "?") + "email=" + encodeURIComponent(e);
+}
+function esc(s) { return (s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// ── 검색 시작 ──
+function doSearch() {
+  const q = $("search").value.trim();
+  if (!q) { clearSearch(); return; }   // 빈 검색어면 탐색 모드로
+  searchQuery = q;
+  $("searchbar").classList.add("show");
+  $("searchChip").textContent = `검색: "${q}"`;
+  reload();
+}
+
+// ── 검색 해제 (탐색 모드로 복귀) ──
+function clearSearch() {
+  searchQuery = "";
+  $("search").value = "";
+  $("searchbar").classList.remove("show");
+  reload();
+}
+
+// ── viewer/seed/검색 바꿔서 처음부터 다시 ──
+function reload() {
+  currentPage = 0; hasNext = true;
+  $("feed").innerHTML = "";
+  loadMore();
+}
+// 새 seed: 탐색 모드 전용. 검색 중이면 무의미하니 탐색으로 복귀시키며 셔플.
+function reshuffle() {
+  if (searchQuery) clearSearch();   // 검색 중이었으면 해제하고 탐색으로
+  $("seed").value = "";
+  reload();
+}
+
+// ── 한 페이지 로드 (이어붙임) ──
+async function loadMore() {
+  if (loading || !hasNext) return;
+  loading = true;
+
+  const params = new URLSearchParams();
+  if (email()) params.set("email", email());
+  params.set("page", currentPage);
+
+  // 검색 모드면 search 파라미터를 싣고 seed는 건드리지 않는다.
+  // 탐색 모드면 기존처럼 seed 로직을 태운다.
+  if (searchQuery) {
+    params.set("search", searchQuery);
+  } else {
+    const s = $("seed").value.trim();
+    if (s) params.set("seed", s);
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/feed/?${params}`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+
+    hasNext = data.has_next;
+
+    // seed 칸/표시는 탐색 모드일 때만 갱신. 검색 모드에선 seed가 null로 오므로 건드리지 않는다.
+    if (!searchQuery) {
+      currentSeed = data.seed;
+      $("seed").value = data.seed;
+      $("seedInfo").textContent = `seed ${data.seed} · viewer ${email() || "익명"}`;
+    } else {
+      $("seedInfo").textContent = `검색 "${searchQuery}" · viewer ${email() || "익명"}`;
+    }
+
+    if (currentPage === 0 && data.results.length === 0) {
+      const msg = searchQuery
+        ? `"${esc(searchQuery)}" 검색 결과가 없습니다.`
+        : "결과가 없습니다.";
+      $("feed").innerHTML = `<div class="empty">${msg}</div>`;
+    } else {
+      appendCards(data.results);
+    }
+    currentPage += 1;
+  } catch (e) {
+    if (currentPage === 0) {
+      $("feed").innerHTML = `<div class="empty">불러오기 실패: ${esc(e.message)}<br/><small>email을 확인하세요.</small></div>`;
+    } else {
+      toast("추가 로드 실패: " + e.message);
+    }
+  } finally {
+    loading = false;
+  }
+}
+
+function appendCards(items) {
+  const html = items.map(cardHTML).join("");
+  $("feed").insertAdjacentHTML("beforeend", html);
+}
+
+function cardHTML(p) {
+  const pid = String(p.post_id);
+  const thumb = p.thumbnail
+    ? `<img class="thumb" src="${esc(p.thumbnail)}" onerror="this.style.display='none'"/>` : "";
+  return `
+  <div class="card" id="card-${pid}">
+    <div class="meta">
+      <span class="stat">조회 <b>${p.view_count}</b></span>
+      <span class="sep">·</span>
+      <span class="stat">좋아요 <b id="lc-${pid}">${p.like_count}</b></span>
+      <span class="sep">·</span>
+      <span class="stat">댓글 <b id="cc-${pid}">${p.comment_count}</b></span>
+    </div>
+    ${thumb}
+    <div class="title" onclick="openDetail('${pid}')">${esc(p.title)}</div>
+    <div class="content">${esc(p.content)}</div>
+    <div class="actions">
+      <button class="act" id="like-${pid}" onclick="doLike('${pid}')">♥ 좋아요 <span class="n" id="likn-${pid}">${p.like_count}</span></button>
+      <button class="act" id="cmt-${pid}" onclick="doComment('${pid}')">💬 댓글 <span class="n" id="cmtn-${pid}">${p.comment_count}</span></button>
+      <button class="act" id="bm-${pid}" onclick="doBookmark('${pid}')">🔖 북마크</button>
+    </div>
+  </div>`;
+}
+
+function flash(pid) {
+  const c = $("card-" + pid);
+  if (c) { c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); }
+}
+function requireEmail() {
+  if (!email()) { toast("먼저 viewer(유저)를 선택하세요"); return false; }
+  return true;
+}
+
+async function doLike(pid) {
+  if (!requireEmail()) return;
+  try {
+    const res = await fetch(`${API_BASE}/posts/${pid}/like/`, {
+      method: "POST",
+      headers: {"Content-Type":"application/x-www-form-urlencoded"},
+      body: "email=" + encodeURIComponent(email()),
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || "실패"); return; }
+    $("lc-" + pid).textContent = data.like_count;
+    $("likn-" + pid).textContent = data.like_count;
+    $("like-" + pid).classList.add("done");
+    flash(pid);
+    toast(data.created ? "좋아요 추가됨" : "이미 누른 글");
+  } catch (e) { toast("오류: " + e.message); }
+}
+
+async function doComment(pid) {
+  if (!requireEmail()) return;
+  try {
+    const res = await fetch(`${API_BASE}/posts/${pid}/comment/`, {
+      method: "POST",
+      headers: {"Content-Type":"application/x-www-form-urlencoded"},
+      body: "email=" + encodeURIComponent(email()),
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || "실패"); return; }
+    $("cc-" + pid).textContent = data.comment_count;
+    $("cmtn-" + pid).textContent = data.comment_count;
+    $("cmt-" + pid).classList.add("done");
+    flash(pid);
+    toast("댓글 추가됨");
+  } catch (e) { toast("오류: " + e.message); }
+}
+
+async function doBookmark(pid) {
+  if (!requireEmail()) return;
+  try {
+    const res = await fetch(`${API_BASE}/posts/${pid}/bookmark/`, {
+      method: "POST",
+      headers: {"Content-Type":"application/x-www-form-urlencoded"},
+      body: "email=" + encodeURIComponent(email()),
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || "실패"); return; }
+    $("bm-" + pid).classList.add("done");
+    toast(data.created ? "북마크 추가됨" : "이미 북마크함");
+  } catch (e) { toast("오류: " + e.message); }
+}
+
+async function openDetail(pid) {
+  try {
+    const res = await fetch(withEmail(`${API_BASE}/posts/${pid}/`));
+    const data = await res.json();
+    if (!res.ok) { toast("상세 불러오기 실패"); return; }
+    $("mTitle").textContent = data.title;
+    $("mCount").textContent = data.comments.length;
+    $("mComments").innerHTML = data.comments.length
+      ? data.comments.map(c => `<div class="cmt"><span class="nick">${esc(c.nickname || "익명")}</span><span class="txt">${esc(c.content)}</span></div>`).join("")
+      : '<div class="cmt-empty">아직 댓글이 없습니다.</div>';
+    $("overlay").classList.add("show");
+    toast("클릭 기록됨 (PostClick +1)");
+  } catch (e) { toast("오류: " + e.message); }
+}
+function closeModal() { $("overlay").classList.remove("show"); }
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// ── 무한스크롤: 바닥 근처 가면 다음 페이지 (검색·탐색 공통) ──
+window.addEventListener("scroll", () => {
+  if (loading || !hasNext) return;
+  const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 400;
+  if (nearBottom) loadMore();
+});
+
+// ── 새로고침만 하면 바로 뜨도록: 유저목록 → 피드 자동 로드 ──
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadUsers();   // 드롭다운 채우고 직전 선택 복원
+  loadMore();          // 그 viewer 기준으로 첫 페이지 (탐색 모드)
+});
+</script>
+</body>
+</html>
